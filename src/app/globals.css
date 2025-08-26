@@ -122,15 +122,16 @@ body.dark {
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-secondary;
+  background-color: hsl(var(--secondary));
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  background-color: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/40;
+  background-color: hsl(var(--muted-foreground) / 0.4);
 }
 
 /* Animation utilities */
@@ -144,9 +145,13 @@ body.dark {
 
 /* Glass morphism effect */
 .glass {
-  @apply bg-white/10 backdrop-blur-md border border-white/20;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .glass-dark {
-  @apply bg-black/10 backdrop-blur-md border border-white/10;
+  background-color: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

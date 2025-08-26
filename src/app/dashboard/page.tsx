@@ -52,9 +52,9 @@ export default function DashboardPage() {
 
   const stats = {
     totalPalettes: userPalettes.length,
-    totalLikes: userPalettes.reduce((sum, p) => sum + p.likesCount, 0),
-    totalViews: userPalettes.reduce((sum, p) => sum + p.viewsCount, 0),
-    publicPalettes: userPalettes.filter(p => p.isPublic).length,
+    totalLikes: userPalettes.reduce((sum, p) => sum + (p.likes || 0), 0),
+    totalViews: userPalettes.reduce((sum, p) => sum + (p.views || 0), 0),
+    publicPalettes: userPalettes.filter(p => p.tags?.includes('public')).length,
   };
 
   return (
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-2">
               {/* View Mode Toggle */}
-              <div className="flex border-2 rounded-lg p-1 premium-dark-card" style="border-color: #333;">
+              <div className="flex border-2 rounded-lg p-1 premium-dark-card" style={{borderColor: '#333'}}>
                 <button
                   onClick={() => setViewMode('grid')}
                   className={cn(
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              <Button variant="outline" size="icon" className="text-white hover:bg-white hover:text-black" style="border-color: #333;">
+              <Button variant="outline" size="icon" className="text-white hover:bg-white hover:text-black" style={{borderColor: '#333'}}>
                 <Filter size={16} />
               </Button>
             </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         ) : (
           /* Empty State */
           <div className="text-center py-16">
-            <div className="w-24 h-24 premium-dark-card border-2 rounded-full flex items-center justify-center mx-auto mb-6" style="border-color: #222;">
+            <div className="w-24 h-24 premium-dark-card border-2 rounded-full flex items-center justify-center mx-auto mb-6" style={{borderColor: '#222'}}>
               <Grid className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-bold text-white uppercase tracking-wide mb-2">No Palettes Yet</h3>
@@ -201,15 +201,15 @@ export default function DashboardPage() {
 
         {/* Bulk Actions */}
         {selectedPalettes.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 premium-dark-card border-2 rounded-lg shadow-lg p-4 flex items-center gap-4" style="border-color: #222;">
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 premium-dark-card border-2 rounded-lg shadow-lg p-4 flex items-center gap-4" style={{borderColor: '#222'}}>
             <span className="text-sm text-white">
               {selectedPalettes.length} selected
             </span>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="text-white hover:bg-white hover:text-black uppercase" style="border-color: #333;">
+              <Button variant="outline" size="sm" className="text-white hover:bg-white hover:text-black uppercase" style={{borderColor: '#333'}}>
                 Share
               </Button>
-              <Button variant="outline" size="sm" className="text-white hover:bg-white hover:text-black uppercase" style="border-color: #333;">
+              <Button variant="outline" size="sm" className="text-white hover:bg-white hover:text-black uppercase" style={{borderColor: '#333'}}>
                 Copy
               </Button>
               <Button variant="destructive" size="sm" className="uppercase">

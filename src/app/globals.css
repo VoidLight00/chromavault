@@ -73,10 +73,27 @@
   }
 }
 
-/* Force Dark Theme Everywhere */
-html, body, #__next, main {
+/* Force Dark Theme Everywhere - Ultimate Override */
+html, 
+html.dark,
+body,
+body.dark,
+#__next, 
+main,
+div[class*="min-h-screen"],
+section,
+nav {
   background-color: #0a0a0a !important;
   color: #ffffff !important;
+}
+
+/* Force all backgrounds to respect dark theme */
+* {
+  background-color: transparent !important;
+}
+
+html, body {
+  background-color: #0a0a0a !important;
 }
 
 /* Force all divs to inherit dark theme */
@@ -92,17 +109,32 @@ div {
   border-color: #222222 !important;
 }
 
-/* Premium Dark Components */
-.premium-dark-bg {
+/* Premium Dark Components - Force Override */
+.premium-dark-bg,
+div.premium-dark-bg {
   background-color: #0a0a0a !important;
 }
 
-.premium-dark-card {
+.premium-dark-card,
+div.premium-dark-card,
+div[style*="background-color: #111"],
+div[style*="backgroundColor: '#111'"] {
   background-color: #111111 !important;
   border-color: #222222 !important;
 }
 
-.premium-dark-border {
+.premium-dark-border,
+*[style*="border-color: #222"],
+*[style*="borderColor: '#222'"] {
+  border-color: #222222 !important;
+}
+
+/* Force specific inline styles */
+div[style*="#111"] {
+  background-color: #111111 !important;
+}
+
+div[style*="#222"] {
   border-color: #222222 !important;
 }
 
@@ -161,4 +193,43 @@ div {
   background-color: rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ULTIMATE DARK THEME OVERRIDE - MUST BE LAST */
+@media all {
+  html {
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+  }
+  
+  body {
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+  }
+  
+  main {
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+  }
+  
+  /* Override any white or light backgrounds */
+  .bg-white,
+  .bg-background,
+  [class*="bg-white"],
+  [class*="bg-background"] {
+    background-color: #0a0a0a !important;
+  }
+  
+  /* Cards should be slightly lighter */
+  .bg-card,
+  [class*="bg-card"],
+  .card {
+    background-color: #111111 !important;
+  }
+  
+  /* All borders should be #222 */
+  * {
+    border-color: #222222 !important;
+  }
 }

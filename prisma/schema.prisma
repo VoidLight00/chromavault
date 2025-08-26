@@ -1,0 +1,384 @@
+// ChromaVault Database Schema
+// Created: 2025-01-23
+// Version: 1.0.0
+// Model: Claude Opus 4.1
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== BASE MODELS ====================
+
+// User Management
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String
+  name            String?
+  avatar          String?
+  bio             String?
+  role            UserRole  @default(USER)
+  isVerified      Boolean   @default(false)
+  verificationToken String?
+  resetToken      String?
+  resetExpires    DateTime?
+  lastLogin       DateTime?
+  
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relations
+  palettes        Palette[]
+  favorites       Favorite[]
+  comments        Comment[]
+  ratings         Rating[]
+  teamMembers     TeamMember[]
+  collections     Collection[]
+  activities      Activity[]
+  notifications   Notification[]
+  
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  PRO
+  ADMIN
+  MODERATOR
+}
+
+// ==================== CORE ENTITIES ====================
+
+// Color Palette
+model Palette {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  slug            String    @unique
+  isPublic        Boolean   @default(false)
+  isFeatured      Boolean   @default(false)
+  viewCount       Int       @default(0)
+  downloadCount   Int       @default(0)
+  
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  version         Int       @default(1)
+  
+  // Relations
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  colors          Color[]
+  tags            PaletteTag[]
+  categories      PaletteCategory[]
+  favorites       Favorite[]
+  comments        Comment[]
+  ratings         Rating[]
+  collections     CollectionPalette[]
+  activities      Activity[]
+  
+  @@index([userId])
+  @@index([slug])
+  @@index([isPublic])
+  @@index([createdAt(sort: Desc)])
+  @@map("palettes")
+}
+
+// Individual Color
+model Color {
+  id              String    @id @default(uuid())
+  hex             String
+  rgb             Json      // {r: 255, g: 255, b: 255}
+  hsl             Json      // {h: 360, s: 100, l: 100}
+  lab             Json      // {l: 100, a: 0, b: 0}
+  name            String?
+  position        Int       // Order in palette
+  
+  // Relations
+  paletteId       String
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  
+  @@unique([paletteId, position])
+  @@index([paletteId])
+  @@index([hex])
+  @@map("colors")
+}
+
+// ==================== TAXONOMY ====================
+
+// Tags
+model Tag {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  slug            String    @unique
+  description     String?
+  usageCount      Int       @default(0)
+  
+  // Relations
+  palettes        PaletteTag[]
+  
+  @@index([slug])
+  @@map("tags")
+}
+
+model PaletteTag {
+  paletteId       String
+  tagId           String
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  tag             Tag       @relation(fields: [tagId], references: [id])
+  
+  @@id([paletteId, tagId])
+  @@map("palette_tags")
+}
+
+// Categories
+model Category {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  slug            String    @unique
+  description     String?
+  icon            String?
+  parentId        String?
+  parent          Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryHierarchy")
+  
+  // Relations
+  palettes        PaletteCategory[]
+  
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model PaletteCategory {
+  paletteId       String
+  categoryId      String
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  category        Category  @relation(fields: [categoryId], references: [id])
+  
+  @@id([paletteId, categoryId])
+  @@map("palette_categories")
+}
+
+// ==================== SOCIAL FEATURES ====================
+
+// Favorites
+model Favorite {
+  id              String    @id @default(uuid())
+  userId          String
+  paletteId       String
+  createdAt       DateTime  @default(now())
+  
+  user            User      @relation(fields: [userId], references: [id])
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, paletteId])
+  @@index([userId])
+  @@index([paletteId])
+  @@map("favorites")
+}
+
+// Comments
+model Comment {
+  id              String    @id @default(uuid())
+  content         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  userId          String
+  paletteId       String
+  parentId        String?
+  user            User      @relation(fields: [userId], references: [id])
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  parent          Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies         Comment[] @relation("CommentReplies")
+  
+  @@index([userId])
+  @@index([paletteId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+// Ratings
+model Rating {
+  id              String    @id @default(uuid())
+  score           Int       // 1-5
+  userId          String
+  paletteId       String
+  createdAt       DateTime  @default(now())
+  
+  user            User      @relation(fields: [userId], references: [id])
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, paletteId])
+  @@index([userId])
+  @@index([paletteId])
+  @@map("ratings")
+}
+
+// ==================== COLLECTIONS ====================
+
+model Collection {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  isPublic        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  palettes        CollectionPalette[]
+  
+  @@index([userId])
+  @@map("collections")
+}
+
+model CollectionPalette {
+  collectionId    String
+  paletteId       String
+  position        Int
+  addedAt         DateTime  @default(now())
+  
+  collection      Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  palette         Palette   @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  
+  @@id([collectionId, paletteId])
+  @@unique([collectionId, position])
+  @@map("collection_palettes")
+}
+
+// ==================== TEAM COLLABORATION ====================
+
+model Team {
+  id              String    @id @default(uuid())
+  name            String
+  slug            String    @unique
+  description     String?
+  logo            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  members         TeamMember[]
+  projects        Project[]
+  
+  @@index([slug])
+  @@map("teams")
+}
+
+model TeamMember {
+  id              String    @id @default(uuid())
+  role            TeamRole  @default(MEMBER)
+  joinedAt        DateTime  @default(now())
+  
+  // Relations
+  userId          String
+  teamId          String
+  user            User      @relation(fields: [userId], references: [id])
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+  @@map("team_members")
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Project {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  status          ProjectStatus @default(ACTIVE)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@index([teamId])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  COMPLETED
+}
+
+// ==================== ACTIVITY & NOTIFICATIONS ====================
+
+model Activity {
+  id              String    @id @default(uuid())
+  type            ActivityType
+  metadata        Json?     // Additional data based on type
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  userId          String
+  paletteId       String?
+  user            User      @relation(fields: [userId], references: [id])
+  palette         Palette?  @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([paletteId])
+  @@index([createdAt(sort: Desc)])
+  @@map("activities")
+}
+
+enum ActivityType {
+  PALETTE_CREATED
+  PALETTE_UPDATED
+  PALETTE_LIKED
+  PALETTE_COMMENTED
+  PALETTE_SHARED
+  COLLECTION_CREATED
+  TEAM_JOINED
+}
+
+model Notification {
+  id              String    @id @default(uuid())
+  type            NotificationType
+  title           String
+  message         String
+  isRead          Boolean   @default(false)
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  PALETTE_LIKED
+  COMMENT_RECEIVED
+  MENTION
+  TEAM_INVITE
+  SYSTEM
+}

@@ -15,13 +15,7 @@ export const metadata: Metadata = {
   keywords: ["color palette", "design tool", "color scheme", "색상 팔레트", "디자인 도구"],
   authors: [{ name: "ChromaVault Team" }],
   manifest: "/manifest.json",
-  themeColor: "#3B82F6",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   openGraph: {
     title: "ChromaVault",
     description: "완벽한 색상 조합을 찾고, 저장하고, 공유하는 크리에이티브를 위한 컬러 팔레트 플랫폼",
@@ -35,6 +29,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#3B82F6",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,7 +46,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={cn(
         inter.className,
-        "min-h-screen bg-[#0a0a0a] font-sans antialiased dark"
+        "min-h-screen font-sans antialiased dark premium-dark-bg"
       )}>
         <ToastProvider>
           <Navigation />

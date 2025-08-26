@@ -60,7 +60,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen premium-dark-bg">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
@@ -134,7 +134,7 @@ export default function Home() {
       </section>
 
       {/* Quick Color Picker */}
-      <section className="py-16 px-4 premium-dark-card border-y-2" style={{borderColor: '#222'}}>
+      <section className="py-16 px-4 border-y-2" style={{backgroundColor: '#111', borderColor: '#222'}}>
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-8">Color Picker</h2>
           <QuickColorPicker onChange={handleColorSelect} />
@@ -169,7 +169,7 @@ export default function Home() {
             
             {/* Create New Palette Card */}
             <Link href="/editor">
-              <div className="group premium-dark-card border-2 border-dashed rounded-xl p-8 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-center justify-center text-center min-h-[350px]" style={{borderColor: '#333'}}>
+              <div className="group border-2 border-dashed rounded-xl p-8 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-center justify-center text-center min-h-[350px]" style={{backgroundColor: '#111', borderColor: '#333'}}>
                 <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
                   <PlusCircle size={32} className="text-white" />
                 </div>
@@ -184,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4 premium-dark-card border-y-2" style={{borderColor: '#222'}}>
+      <section className="py-20 px-4 border-y-2" style={{backgroundColor: '#111', borderColor: '#222'}}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-4">Premium Features</h2>

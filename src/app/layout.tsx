@@ -43,14 +43,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className={cn(
-        inter.className,
-        "min-h-screen font-sans antialiased dark premium-dark-bg"
-      )}>
+    <html lang="ko" suppressHydrationWarning className="dark" style={{ backgroundColor: '#0a0a0a' }}>
+      <body 
+        className={cn(
+          inter.className,
+          "min-h-screen font-sans antialiased dark"
+        )}
+        style={{ 
+          backgroundColor: '#0a0a0a', 
+          color: '#ffffff',
+          minHeight: '100vh' 
+        }}
+      >
         <ToastProvider>
           <Navigation />
-          <main className="pt-16 md:pt-16">
+          <main className="pt-16 md:pt-16" style={{ backgroundColor: '#0a0a0a' }}>
             {children}
           </main>
           <InstallBanner />

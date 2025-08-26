@@ -72,7 +72,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex fixed top-0 left-0 right-0 h-16 bg-[#111]/95 backdrop-blur-md border-b-2 border-[#222] z-40">
+      <nav className="hidden md:flex fixed top-0 left-0 right-0 h-16 backdrop-blur-md border-b-2 z-40" style={{backgroundColor: 'rgba(17, 17, 17, 0.95)', borderBottomColor: '#222'}}>
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-4 lg:px-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#111]/95 backdrop-blur-md border-b-2 border-[#222] z-40">
+      <nav className="md:hidden fixed top-0 left-0 right-0 h-16 backdrop-blur-md border-b-2 z-40" style={{backgroundColor: 'rgba(17, 17, 17, 0.95)', borderBottomColor: '#222'}}>
         <div className="flex items-center justify-between px-4 h-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export function Navigation() {
 
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 top-16 bg-background z-30">
+          <div className="fixed inset-0 top-16 z-30" style={{backgroundColor: '#0a0a0a'}}>
             <div className="p-4 space-y-6">
               {/* Main Navigation */}
               <div className="space-y-2">

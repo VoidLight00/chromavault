@@ -61,26 +61,33 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    border-color: #222222 !important;
+  }
+  html {
+    background-color: #0a0a0a !important;
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    min-height: 100vh !important;
   }
 }
 
-/* Premium Dark Theme Overrides */
-body {
+/* Force Dark Theme Everywhere */
+html, body, #__next, main {
   background-color: #0a0a0a !important;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
-body.dark {
-  background-color: #0a0a0a !important;
+/* Force all divs to inherit dark theme */
+div {
+  background-color: transparent;
+  color: inherit;
 }
 
 /* Override card backgrounds */
-.bg-card {
+.bg-card,
+[class*="bg-card"] {
   background-color: #111111 !important;
   border-color: #222222 !important;
 }

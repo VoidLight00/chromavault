@@ -58,7 +58,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen premium-dark-bg">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
       <div className="max-w-7xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
@@ -80,7 +80,7 @@ export default function DashboardPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="premium-dark-card p-4 rounded-lg border premium-dark-border">
+            <div className="p-4 rounded-lg border" style={{backgroundColor: '#111', borderColor: '#222'}}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <Grid className="w-5 h-5 text-primary" />
@@ -92,7 +92,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="premium-dark-card p-4 rounded-lg border premium-dark-border">
+            <div className="p-4 rounded-lg border" style={{backgroundColor: '#111', borderColor: '#222'}}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-900/20 rounded-lg">
                   <Heart className="w-5 h-5 text-red-500" />
@@ -104,7 +104,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="premium-dark-card p-4 rounded-lg border premium-dark-border">
+            <div className="p-4 rounded-lg border" style={{backgroundColor: '#111', borderColor: '#222'}}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-900/20 rounded-lg">
                   <Eye className="w-5 h-5 text-blue-500" />
@@ -116,7 +116,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="premium-dark-card p-4 rounded-lg border premium-dark-border">
+            <div className="p-4 rounded-lg border" style={{backgroundColor: '#111', borderColor: '#222'}}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-900/20 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-green-500" />
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-2">
               {/* View Mode Toggle */}
-              <div className="flex border-2 rounded-lg p-1 premium-dark-card" style={{borderColor: '#333'}}>
+              <div className="flex border-2 rounded-lg p-1" style={{backgroundColor: '#111', borderColor: '#333'}}>
                 <button
                   onClick={() => setViewMode('grid')}
                   className={cn(
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         ) : (
           /* Empty State */
           <div className="text-center py-16">
-            <div className="w-24 h-24 premium-dark-card border-2 rounded-full flex items-center justify-center mx-auto mb-6" style={{borderColor: '#222'}}>
+            <div className="w-24 h-24 border-2 rounded-full flex items-center justify-center mx-auto mb-6" style={{backgroundColor: '#111', borderColor: '#222'}}>
               <Grid className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-bold text-white uppercase tracking-wide mb-2">No Palettes Yet</h3>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
 
         {/* Bulk Actions */}
         {selectedPalettes.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 premium-dark-card border-2 rounded-lg shadow-lg p-4 flex items-center gap-4" style={{borderColor: '#222'}}>
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 border-2 rounded-lg shadow-lg p-4 flex items-center gap-4" style={{backgroundColor: '#111', borderColor: '#222'}}>
             <span className="text-sm text-white">
               {selectedPalettes.length} selected
             </span>

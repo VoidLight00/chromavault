@@ -1,0 +1,956 @@
+/**
+ * Palette Routes
+ * CRUD operations for color palettes
+ */
+
+import { Router } from 'express';
+import { z } from 'zod';
+import { prismaClient, dbUtils } from '../config/database';
+import { responseFormats, validationSchemas } from '../config/api.config';
+import { 
+  validateRequest, 
+  asyncHandler, 
+  createError 
+} from '../middleware/error-handler';
+import { requireOwnershipOrAdmin, requireRole } from '../middleware/auth';
+import { strictRateLimit } from '../middleware/rate-limit';
+import { logger } from '../utils/logger';
+
+const router = Router();
+
+// Validation schemas
+const createPaletteSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+    description: z.string().max(500, 'Description too long').optional(),
+    isPublic: z.boolean().default(false),
+    colors: z.array(z.object({
+      hex: validationSchemas.colorHex,
+      name: z.string().max(50).optional(),
+      position: z.number().int().min(0),
+    })).min(1, 'At least one color is required').max(20, 'Too many colors'),
+    tags: z.array(z.string().max(50)).max(10).optional(),
+    categoryIds: z.array(validationSchemas.uuid).max(5).optional(),
+  }),
+});
+
+const updatePaletteSchema = z.object({
+  params: z.object({
+    id: validationSchemas.uuid,
+  }),
+  body: z.object({
+    name: z.string().min(1).max(100).optional(),
+    description: z.string().max(500).optional(),
+    isPublic: z.boolean().optional(),
+    colors: z.array(z.object({
+      hex: validationSchemas.colorHex,
+      name: z.string().max(50).optional(),
+      position: z.number().int().min(0),
+    })).min(1).max(20).optional(),
+    tags: z.array(z.string().max(50)).max(10).optional(),
+    categoryIds: z.array(validationSchemas.uuid).max(5).optional(),
+  }),
+});
+
+const paletteParamsSchema = z.object({
+  params: z.object({
+    id: validationSchemas.uuid,
+  }),
+});
+
+const getPalettesSchema = z.object({
+  query: validationSchemas.pagination.extend({
+    search: z.string().optional(),
+    userId: validationSchemas.uuid.optional(),
+    isPublic: z.enum(['true', 'false']).optional(),
+    featured: z.enum(['true', 'false']).optional(),
+    tags: z.string().optional(), // comma-separated tag names
+    categoryId: validationSchemas.uuid.optional(),
+    colors: z.string().optional(), // comma-separated hex colors
+    sortBy: z.enum(['name', 'createdAt', 'updatedAt', 'viewCount', 'downloadCount']).default('createdAt'),
+  }),
+});
+
+// Helper function to convert hex to RGB
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+};
+
+// Helper function to convert RGB to HSL
+const rgbToHsl = (r: number, g: number, b: number) => {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0; // achromatic
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100)
+  };
+};
+
+// Helper function to convert RGB to LAB (simplified)
+const rgbToLab = (r: number, g: number, b: number) => {
+  // Simplified conversion - in production, use a proper color library
+  const x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+  const z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+  
+  return {
+    l: Math.round(y * 100),
+    a: Math.round((x - y) * 128),
+    b: Math.round((y - z) * 128)
+  };
+};
+
+/**
+ * @swagger
+ * /palettes:
+ *   get:
+ *     summary: Get palettes with filtering and pagination
+ *     tags: [Palettes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - name: userId
+ *         in: query
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by user ID
+ *       - name: isPublic
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         description: Filter by public/private status
+ *       - name: featured
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         description: Filter featured palettes
+ *       - name: tags
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Comma-separated tag names
+ *       - name: colors
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Comma-separated hex colors for similarity search
+ *       - $ref: '#/components/parameters/SortParam'
+ *       - $ref: '#/components/parameters/OrderParam'
+ *     responses:
+ *       200:
+ *         description: Palettes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedResponse'
+ */
+router.get('/',
+  validateRequest(getPalettesSchema),
+  asyncHandler(async (req, res) => {
+    const { 
+      page, 
+      limit, 
+      search, 
+      userId, 
+      isPublic, 
+      featured, 
+      tags, 
+      categoryId, 
+      colors, 
+      sortBy, 
+      sortOrder 
+    } = req.query as any;
+
+    // Build where clause
+    const where: any = {};
+
+    // Public visibility logic
+    if (!req.user || req.user.role !== 'ADMIN') {
+      if (userId && userId === req.user?.id) {
+        // User can see their own private palettes
+      } else {
+        where.isPublic = true;
+      }
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (userId) where.userId = userId;
+    if (isPublic !== undefined) where.isPublic = isPublic === 'true';
+    if (featured !== undefined) where.isFeatured = featured === 'true';
+    if (categoryId) {
+      where.categories = {
+        some: { categoryId }
+      };
+    }
+
+    // Tag filtering
+    if (tags) {
+      const tagNames = tags.split(',').map((t: string) => t.trim());
+      where.tags = {
+        some: {
+          tag: {
+            name: { in: tagNames }
+          }
+        }
+      };
+    }
+
+    // Color similarity filtering (simplified)
+    if (colors) {
+      const colorHexes = colors.split(',').map((c: string) => c.trim());
+      where.colors = {
+        some: {
+          hex: { in: colorHexes }
+        }
+      };
+    }
+
+    // Include relations
+    const include = {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+        }
+      },
+      colors: {
+        orderBy: { position: 'asc' }
+      },
+      tags: {
+        include: {
+          tag: {
+            select: { name: true, slug: true }
+          }
+        }
+      },
+      categories: {
+        include: {
+          category: {
+            select: { name: true, slug: true, icon: true }
+          }
+        }
+      },
+      _count: {
+        select: {
+          favorites: true,
+          comments: true,
+          ratings: true
+        }
+      }
+    };
+
+    // Order by
+    const orderBy: any = {};
+    if (sortBy === 'name') orderBy.name = sortOrder;
+    else if (sortBy === 'viewCount') orderBy.viewCount = sortOrder;
+    else if (sortBy === 'downloadCount') orderBy.downloadCount = sortOrder;
+    else orderBy[sortBy] = sortOrder;
+
+    const result = await prismaClient.paginate('palette', {
+      page,
+      limit,
+      where,
+      orderBy,
+      include,
+    });
+
+    res.json(responseFormats.paginated(
+      result.data,
+      result.pagination.total,
+      result.pagination.page,
+      result.pagination.limit
+    ));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes/{id}:
+ *   get:
+ *     summary: Get a specific palette by ID
+ *     tags: [Palettes]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Palette ID
+ *     responses:
+ *       200:
+ *         description: Palette details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Palette'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.get('/:id',
+  validateRequest(paletteParamsSchema),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const palette = await prismaClient.palette.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          }
+        },
+        colors: {
+          orderBy: { position: 'asc' }
+        },
+        tags: {
+          include: {
+            tag: {
+              select: { name: true, slug: true }
+            }
+          }
+        },
+        categories: {
+          include: {
+            category: {
+              select: { name: true, slug: true, icon: true }
+            }
+          }
+        },
+        favorites: req.user ? {
+          where: { userId: req.user.id },
+          select: { id: true }
+        } : false,
+        _count: {
+          select: {
+            favorites: true,
+            comments: true,
+            ratings: true
+          }
+        }
+      }
+    });
+
+    if (!palette) {
+      throw createError.notFound('Palette');
+    }
+
+    // Check visibility
+    if (!palette.isPublic && palette.userId !== req.user?.id && req.user?.role !== 'ADMIN') {
+      throw createError.notFound('Palette');
+    }
+
+    // Increment view count (only if not the owner)
+    if (palette.userId !== req.user?.id) {
+      await prismaClient.palette.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } }
+      });
+    }
+
+    // Add user's favorite status
+    const responseData = {
+      ...palette,
+      isFavorited: req.user ? palette.favorites.length > 0 : false,
+      favorites: undefined, // Remove the favorites array from response
+    };
+
+    res.json(responseFormats.success(responseData, 'Palette retrieved successfully'));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes:
+ *   post:
+ *     summary: Create a new palette
+ *     tags: [Palettes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PaletteInput'
+ *     responses:
+ *       201:
+ *         description: Palette created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Palette'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post('/',
+  strictRateLimit(10, 300000), // 10 palettes per 5 minutes
+  validateRequest(createPaletteSchema),
+  asyncHandler(async (req, res) => {
+    const { name, description, isPublic, colors, tags, categoryIds } = req.body;
+    const userId = req.user!.id;
+
+    // Generate unique slug
+    const baseSlug = name.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 50);
+    
+    const slug = await dbUtils.generateUniqueSlug('palette', baseSlug);
+
+    // Start transaction
+    const result = await prismaClient.$transaction(async (tx) => {
+      // Create palette
+      const palette = await tx.palette.create({
+        data: {
+          name,
+          description,
+          slug,
+          isPublic: isPublic || false,
+          userId,
+        }
+      });
+
+      // Create colors
+      const colorData = colors.map((color: any) => {
+        const rgb = hexToRgb(color.hex)!;
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        const lab = rgbToLab(rgb.r, rgb.g, rgb.b);
+
+        return {
+          hex: color.hex.toUpperCase(),
+          rgb,
+          hsl,
+          lab,
+          name: color.name,
+          position: color.position,
+          paletteId: palette.id,
+        };
+      });
+
+      await tx.color.createMany({
+        data: colorData,
+      });
+
+      // Handle tags
+      if (tags && tags.length > 0) {
+        for (const tagName of tags) {
+          // Create tag if it doesn't exist
+          const tag = await tx.tag.upsert({
+            where: { name: tagName.toLowerCase() },
+            create: {
+              name: tagName.toLowerCase(),
+              slug: tagName.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+            },
+            update: {
+              usageCount: { increment: 1 },
+            },
+          });
+
+          // Link tag to palette
+          await tx.paletteTag.create({
+            data: {
+              paletteId: palette.id,
+              tagId: tag.id,
+            },
+          });
+        }
+      }
+
+      // Handle categories
+      if (categoryIds && categoryIds.length > 0) {
+        const categoryData = categoryIds.map((categoryId: string) => ({
+          paletteId: palette.id,
+          categoryId,
+        }));
+
+        await tx.paletteCategory.createMany({
+          data: categoryData,
+        });
+      }
+
+      // Create activity log
+      await tx.activity.create({
+        data: {
+          type: 'PALETTE_CREATED',
+          userId,
+          paletteId: palette.id,
+          metadata: {
+            paletteName: name,
+            colorCount: colors.length,
+          },
+        },
+      });
+
+      return palette;
+    });
+
+    // Fetch complete palette data
+    const palette = await prismaClient.palette.findUnique({
+      where: { id: result.id },
+      include: {
+        user: {
+          select: { id: true, name: true, avatar: true }
+        },
+        colors: {
+          orderBy: { position: 'asc' }
+        },
+        tags: {
+          include: {
+            tag: { select: { name: true, slug: true } }
+          }
+        },
+        categories: {
+          include: {
+            category: { select: { name: true, slug: true, icon: true } }
+          }
+        },
+      }
+    });
+
+    res.status(201).json(responseFormats.success(palette, 'Palette created successfully'));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes/{id}:
+ *   put:
+ *     summary: Update a palette
+ *     tags: [Palettes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Palette ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PaletteInput'
+ *     responses:
+ *       200:
+ *         description: Palette updated successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+router.put('/:id',
+  validateRequest(updatePaletteSchema),
+  requireOwnershipOrAdmin(),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { name, description, isPublic, colors, tags, categoryIds } = req.body;
+
+    // Check if palette exists and user has permission
+    const existingPalette = await prismaClient.palette.findUnique({
+      where: { id },
+      select: { id: true, userId: true, version: true }
+    });
+
+    if (!existingPalette) {
+      throw createError.notFound('Palette');
+    }
+
+    if (existingPalette.userId !== req.user!.id && req.user!.role !== 'ADMIN') {
+      throw createError.forbidden('Cannot edit this palette');
+    }
+
+    // Update in transaction
+    const result = await prismaClient.$transaction(async (tx) => {
+      // Update palette basic info
+      const updateData: any = {
+        version: { increment: 1 },
+      };
+      
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (isPublic !== undefined) updateData.isPublic = isPublic;
+
+      const palette = await tx.palette.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // Update colors if provided
+      if (colors) {
+        // Delete existing colors
+        await tx.color.deleteMany({
+          where: { paletteId: id }
+        });
+
+        // Create new colors
+        const colorData = colors.map((color: any) => {
+          const rgb = hexToRgb(color.hex)!;
+          const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+          const lab = rgbToLab(rgb.r, rgb.g, rgb.b);
+
+          return {
+            hex: color.hex.toUpperCase(),
+            rgb,
+            hsl,
+            lab,
+            name: color.name,
+            position: color.position,
+            paletteId: id,
+          };
+        });
+
+        await tx.color.createMany({
+          data: colorData,
+        });
+      }
+
+      // Update tags if provided
+      if (tags) {
+        // Remove existing tags
+        await tx.paletteTag.deleteMany({
+          where: { paletteId: id }
+        });
+
+        // Add new tags
+        for (const tagName of tags) {
+          const tag = await tx.tag.upsert({
+            where: { name: tagName.toLowerCase() },
+            create: {
+              name: tagName.toLowerCase(),
+              slug: tagName.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+              usageCount: 1,
+            },
+            update: {
+              usageCount: { increment: 1 },
+            },
+          });
+
+          await tx.paletteTag.create({
+            data: {
+              paletteId: id,
+              tagId: tag.id,
+            },
+          });
+        }
+      }
+
+      // Update categories if provided
+      if (categoryIds) {
+        await tx.paletteCategory.deleteMany({
+          where: { paletteId: id }
+        });
+
+        if (categoryIds.length > 0) {
+          const categoryData = categoryIds.map((categoryId: string) => ({
+            paletteId: id,
+            categoryId,
+          }));
+
+          await tx.paletteCategory.createMany({
+            data: categoryData,
+          });
+        }
+      }
+
+      // Create activity log
+      await tx.activity.create({
+        data: {
+          type: 'PALETTE_UPDATED',
+          userId: req.user!.id,
+          paletteId: id,
+          metadata: {
+            paletteName: name || updateData.name,
+            version: palette.version,
+          },
+        },
+      });
+
+      return palette;
+    });
+
+    // Fetch complete updated palette
+    const palette = await prismaClient.palette.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: { id: true, name: true, avatar: true }
+        },
+        colors: {
+          orderBy: { position: 'asc' }
+        },
+        tags: {
+          include: {
+            tag: { select: { name: true, slug: true } }
+          }
+        },
+        categories: {
+          include: {
+            category: { select: { name: true, slug: true, icon: true } }
+          }
+        },
+      }
+    });
+
+    res.json(responseFormats.success(palette, 'Palette updated successfully'));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes/{id}:
+ *   delete:
+ *     summary: Delete a palette
+ *     tags: [Palettes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Palette ID
+ *     responses:
+ *       200:
+ *         description: Palette deleted successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+router.delete('/:id',
+  validateRequest(paletteParamsSchema),
+  requireOwnershipOrAdmin(),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const palette = await prismaClient.palette.findUnique({
+      where: { id },
+      select: { id: true, userId: true, name: true }
+    });
+
+    if (!palette) {
+      throw createError.notFound('Palette');
+    }
+
+    if (palette.userId !== req.user!.id && req.user!.role !== 'ADMIN') {
+      throw createError.forbidden('Cannot delete this palette');
+    }
+
+    // Soft delete (using middleware)
+    await prismaClient.palette.delete({
+      where: { id }
+    });
+
+    // Create activity log
+    await prismaClient.activity.create({
+      data: {
+        type: 'PALETTE_UPDATED',
+        userId: req.user!.id,
+        paletteId: id,
+        metadata: {
+          action: 'deleted',
+          paletteName: palette.name,
+        },
+      },
+    });
+
+    res.json(responseFormats.success(null, 'Palette deleted successfully'));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes/{id}/favorite:
+ *   post:
+ *     summary: Toggle favorite status for a palette
+ *     tags: [Palettes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Palette ID
+ *     responses:
+ *       200:
+ *         description: Favorite status toggled
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.post('/:id/favorite',
+  validateRequest(paletteParamsSchema),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if palette exists
+    const palette = await prismaClient.palette.findUnique({
+      where: { id },
+      select: { id: true, isPublic: true, userId: true }
+    });
+
+    if (!palette) {
+      throw createError.notFound('Palette');
+    }
+
+    // Check visibility
+    if (!palette.isPublic && palette.userId !== userId) {
+      throw createError.notFound('Palette');
+    }
+
+    // Toggle favorite
+    const existingFavorite = await prismaClient.favorite.findUnique({
+      where: {
+        userId_paletteId: {
+          userId,
+          paletteId: id,
+        }
+      }
+    });
+
+    let isFavorited: boolean;
+
+    if (existingFavorite) {
+      // Remove favorite
+      await prismaClient.favorite.delete({
+        where: { id: existingFavorite.id }
+      });
+      isFavorited = false;
+    } else {
+      // Add favorite
+      await prismaClient.favorite.create({
+        data: {
+          userId,
+          paletteId: id,
+        }
+      });
+      isFavorited = true;
+
+      // Create activity log
+      await prismaClient.activity.create({
+        data: {
+          type: 'PALETTE_LIKED',
+          userId,
+          paletteId: id,
+        },
+      });
+    }
+
+    res.json(responseFormats.success({
+      isFavorited,
+    }, `Palette ${isFavorited ? 'added to' : 'removed from'} favorites`));
+  })
+);
+
+/**
+ * @swagger
+ * /palettes/{id}/download:
+ *   post:
+ *     summary: Record a palette download
+ *     tags: [Palettes]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Palette ID
+ *     responses:
+ *       200:
+ *         description: Download recorded
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.post('/:id/download',
+  validateRequest(paletteParamsSchema),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const palette = await prismaClient.palette.findUnique({
+      where: { id },
+      select: { id: true, isPublic: true, userId: true }
+    });
+
+    if (!palette) {
+      throw createError.notFound('Palette');
+    }
+
+    // Check visibility
+    if (!palette.isPublic && palette.userId !== req.user?.id && req.user?.role !== 'ADMIN') {
+      throw createError.notFound('Palette');
+    }
+
+    // Increment download count
+    await prismaClient.palette.update({
+      where: { id },
+      data: { downloadCount: { increment: 1 } }
+    });
+
+    res.json(responseFormats.success(null, 'Download recorded'));
+  })
+);
+
+export default router;

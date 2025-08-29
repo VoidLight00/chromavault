@@ -1,259 +1,328 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { PlusCircle, Palette, TrendingUp, Star, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { SearchBar } from '@/components/layout/search-bar';
-import { PaletteCardPremium } from '@/components/palette-card-premium';
-import { ColorSwatch } from '@/components/color/color-swatch';
-import { QuickColorPicker } from '@/components/color/color-picker';
-import { generateRandomColor } from '@/lib/utils/color-utils';
-import { Palette as PaletteType } from '@/types';
+import { useState } from 'react';
+import { PaletteDetailModal } from '@/components/palette/PaletteDetailModal';
+import { HeroSection } from '@/components/sections/HeroSection';
 
-// Premium palette data
-const featuredPalettes = [
-  {
-    id: '1',
-    name: 'Neon Dreams',
-    description: 'Cyberpunk-inspired neon colors with electric vibes',
-    colors: ['#FF006E', '#FB5607', '#FFBE0B', '#8338EC'],
-    tags: ['neon', 'cyberpunk', 'vibrant'],
-    likes: 234,
-    views: 1567,
-    date: '2025-01-26',
-    number: '001',
-  },
-  {
-    id: '2',
-    name: 'Midnight Aurora',
-    description: 'Deep space colors with aurora borealis hints',
-    colors: ['#003049', '#0077B6', '#00B4D8', '#90E0EF'],
-    tags: ['dark', 'space', 'aurora'],
-    likes: 189,
-    views: 987,
-    date: '2025-01-25',
-    number: '002',
-  },
-  {
-    id: '3',
-    name: 'Tokyo Sunset',
-    description: 'Urban sunset palette inspired by Tokyo skyline',
-    colors: ['#FF4365', '#FBAF00', '#00D9FF', '#7B2CBF'],
-    tags: ['sunset', 'urban', 'japan'],
-    likes: 312,
-    views: 2341,
-    date: '2025-01-24',
-    number: '003',
-  },
-];
+export default function HomePage() {
+  const [selectedPalette, setSelectedPalette] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-export default function Home() {
-  const [randomColors, setRandomColors] = React.useState<any[]>([]);
+  const palettes = [
+    { id: 1, name: 'Luxury Gold', description: '금빛 럭셔리와 로열 블루, 마젠타의 고급스러운 조합', colors: ['#FFD700', '#4169E1', '#FF1493'] },
+    { id: 2, name: 'Neon Cyber', description: '사이버펑크 네온 - 시안, 마젠타, 옐로우', colors: ['#00FFFF', '#FF00FF', '#FFFF00'] },
+    { id: 3, name: 'Royal Elegance', description: '왕실의 품격 - 보라, 토마토 레드, 터콰이즈', colors: ['#9370DB', '#FF6347', '#20B2AA'] },
+    { id: 4, name: 'Nordic Aurora', description: '북유럽 오로라 - 아이스 블루, 민트, 핫 핑크', colors: ['#00D4FF', '#00FF88', '#FF0080'] },
+    { id: 5, name: 'Monochrome Accent', description: '모노크롬 액센트 - 화이트, 레드, 그레이', colors: ['#FFFFFF', '#FF3366', '#666666'] },
+    { id: 6, name: 'Ocean Depths', description: '심해의 신비 - 딥 블루, 터콰이즈, 코랄', colors: ['#0077BE', '#40E0D0', '#FF7F50'] },
+    { id: 7, name: 'Sunset Gradient', description: '석양 그라데이션 - 레드, 오렌지, 퍼플', colors: ['#FF512F', '#F09819', '#764BA2'] },
+    { id: 8, name: 'Terminal Green', description: '터미널 그린 - 네온 그린, 오렌지, 스카이 블루', colors: ['#00FF00', '#FFA500', '#00BFFF'] },
+    { id: 9, name: 'Pastel Dream', description: '파스텔 드림 - 베이비 핑크, 라벤더, 스카이', colors: ['#FFB6C1', '#B19CD9', '#87CEEB'] },
+    { id: 10, name: 'Electric Voltage', description: '일렉트릭 볼티지 - 옐로우, 시안, 마젠타', colors: ['#FCFF00', '#00F5FF', '#FF00AA'] },
+    { id: 11, name: 'Minimal Contrast', description: '미니멀 컨트라스트 - 화이트, 블루, 앰버', colors: ['#F5F5F5', '#2196F3', '#FFC107'] },
+    { id: 12, name: 'Gradient Master', description: '그라데이션 마스터 - 퍼플, 핑크, 블루', colors: ['#667eea', '#f093fb', '#4facfe'] },
+  ];
 
-  React.useEffect(() => {
-    setRandomColors(Array.from({ length: 8 }, () => generateRandomColor()));
-  }, []);
+  const handlePaletteClick = (id: number) => {
+    setSelectedPalette(id);
+  };
 
-  const handleColorSelect = (color: any) => {
-    console.log('Selected color:', color);
+  const copyCode = () => {
+    const palette = palettes.find(p => p.id === selectedPalette);
+    if (!palette) return;
+
+    const code = `// ${palette.name} Color Palette
+const colorPalette = {
+    primary: "${palette.colors[0]}",
+    secondary: "${palette.colors[1]}",
+    accent: "${palette.colors[2]}"
+};`;
+
+    navigator.clipboard.writeText(code).then(() => {
+      const button = document.getElementById('copyButton') as HTMLButtonElement;
+      if (button) {
+        button.textContent = 'COPIED!';
+        button.style.background = '#00FF00';
+        button.style.color = '#000';
+        setTimeout(() => {
+          button.textContent = 'COPY CODE';
+          button.style.background = '#333';
+          button.style.color = '#fff';
+        }, 2000);
+      }
+    });
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: '#0a0a0a',
+      color: '#ffffff',
+      fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
+    }}>
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-white uppercase tracking-[3px] mb-6">
-              ChromaVault
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              완벽한 색상 조합을 찾고, 저장하고, 공유하는 
-              <br className="hidden md:block" />
-              크리에이티브를 위한 컬러 팔레트 플랫폼
-            </p>
-          </div>
+      <HeroSection />
+      
+      {/* Palettes Section */}
+      <div style={{ padding: '40px 20px', maxWidth: '1600px', margin: '0 auto' }}>
+        <h1 className="gradient-text" style={{
+          fontSize: '48px',
+          fontWeight: 900,
+          textAlign: 'center',
+          marginBottom: '20px',
+          textTransform: 'uppercase',
+          letterSpacing: '-2px'
+        }}>
+          Premium Color Palettes
+        </h1>
+        <p style={{
+          textAlign: 'center',
+          color: '#666',
+          fontSize: '18px',
+          marginBottom: '60px',
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          ChromaVault - 완벽한 색상 조합을 찾고, 저장하고, 공유하세요
+        </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" className="bg-white text-black hover:bg-gray-200 font-bold uppercase tracking-wide" asChild>
-              <Link href="/editor" className="gap-2">
-                <PlusCircle size={20} />
-                Create Palette
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" className="text-white hover:bg-white hover:text-black font-bold uppercase tracking-wide" style={{borderColor: '#333'}} asChild>
-              <Link href="/explore" className="gap-2">
-                <Palette size={20} />
-                Explore
-              </Link>
-            </Button>
-          </div>
-
-          {/* Quick Search */}
-          <div className="max-w-2xl mx-auto">
-            <SearchBar
-              placeholder="원하는 팔레트를 검색해보세요..."
-              className="mb-8"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Color Inspiration */}
-      <section className="py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-4">Quick Inspiration</h2>
-            <p className="text-gray-400">
-              무작위 색상들로 새로운 영감을 얻어보세요
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {randomColors.map((color, index) => (
-              <ColorSwatch
-                key={index}
-                color={color}
-                size="lg"
-                showHex={false}
-                onClick={() => handleColorSelect(color)}
-              />
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Button
-              variant="outline"
-              onClick={() => setRandomColors(Array.from({ length: 8 }, () => generateRandomColor()))}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '40px',
+          marginBottom: '60px'
+        }}>
+          {palettes.map(palette => (
+            <div
+              key={palette.id}
+              onClick={() => handlePaletteClick(palette.id)}
+              className={`glass-card glass-card-hover palette-card ${selectedPalette === palette.id ? 'gradient-border' : ''}`}
+              style={{
+                padding: '30px',
+                borderRadius: '16px',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                transform: selectedPalette === palette.id ? 'translateY(-5px)' : 'none',
+                boxShadow: selectedPalette === palette.id ? '0 10px 40px rgba(0, 0, 0, 0.5)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (selectedPalette !== palette.id) {
+                  e.currentTarget.style.borderColor = '#444';
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedPalette !== palette.id) {
+                  e.currentTarget.style.borderColor = '#222';
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }
+              }}
             >
-              새 색상 생성
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Color Picker */}
-      <section className="py-16 px-4 border-y-2" style={{backgroundColor: '#111', borderColor: '#222'}}>
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-8">Color Picker</h2>
-          <QuickColorPicker onChange={handleColorSelect} />
-        </div>
-      </section>
-
-      {/* Featured Palettes */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-2">Popular Palettes</h2>
-              <p className="text-gray-400">
-                Most loved color combinations from our community
-              </p>
-            </div>
-            <Button variant="outline" className="text-white hover:bg-white hover:text-black uppercase tracking-wide" style={{borderColor: '#333'}} asChild>
-              <Link href="/explore" className="gap-2">
-                View All
-                <ArrowRight size={16} />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredPalettes.map((palette) => (
-              <PaletteCardPremium
-                key={palette.id}
-                {...palette}
-              />
-            ))}
-            
-            {/* Create New Palette Card */}
-            <Link href="/editor">
-              <div className="group border-2 border-dashed rounded-xl p-8 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-center justify-center text-center min-h-[350px]" style={{backgroundColor: '#111', borderColor: '#333'}}>
-                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
-                  <PlusCircle size={32} className="text-white" />
-                </div>
-                <h3 className="text-xl font-bold uppercase tracking-wide text-white mb-2">Create New</h3>
-                <p className="text-gray-400">
-                  Design your own unique color palette
-                </p>
+              <div style={{
+                fontSize: '14px',
+                color: '#666',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                marginBottom: '10px'
+              }}>
+                Palette {String(palette.id).padStart(2, '0')}
               </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 px-4 border-y-2" style={{backgroundColor: '#111', borderColor: '#222'}}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white uppercase tracking-wide mb-4">Premium Features</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              전문적인 디자인 작업부터 개인 프로젝트까지, 
-              모든 창작 활동을 위한 완벽한 도구를 제공합니다
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <Palette className="w-8 h-8 text-white" />
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                marginBottom: '20px',
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
+              }}>
+                {palette.name}
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Intuitive Editor</h3>
-              <p className="text-gray-400">
-                드래그 앤 드롭으로 쉽게 색상을 조정하고, 
-                실시간으로 조화로운 팔레트를 만들 수 있습니다
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <Star className="w-8 h-8 text-white" />
+              <div style={{
+                fontSize: '14px',
+                color: '#999',
+                marginBottom: '30px',
+                lineHeight: '1.6'
+              }}>
+                {palette.description}
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">AI Recommendations</h3>
-              <p className="text-gray-400">
-                색상 이론을 기반으로 완벽한 조합을 제안하고, 
-                트렌드에 맞는 팔레트를 추천합니다
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-8 h-8 text-white" />
+              
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginBottom: '20px'
+              }}>
+                {palette.colors.map((color, index) => (
+                  <div
+                    key={index}
+                    className="color-sample"
+                    style={{
+                      flex: 1,
+                      height: '80px',
+                      borderRadius: '8px',
+                      background: `linear-gradient(135deg, ${color}, ${color}dd)`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      const span = e.currentTarget.querySelector('span');
+                      if (span) (span as HTMLElement).style.opacity = '1';
+                    }}
+                    onMouseLeave={(e) => {
+                      const span = e.currentTarget.querySelector('span');
+                      if (span) (span as HTMLElement).style.opacity = '0';
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'white',
+                      textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease'
+                    }}>
+                      {color}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Community Sharing</h3>
-              <p className="text-gray-400">
-                전세계 크리에이터들과 팔레트를 공유하고, 
-                영감을 주고받을 수 있습니다
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wide mb-6">
-            Start Creating Today
-          </h2>
-          <p className="text-xl text-gray-400 mb-8">
-            Join free and create unlimited color palettes
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-black hover:bg-gray-200 font-bold uppercase tracking-wide" asChild>
-              <Link href="/auth/signup">
-                Get Started Free
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" className="text-white hover:bg-white hover:text-black font-bold uppercase tracking-wide" style={{borderColor: '#333'}} asChild>
-              <Link href="/explore">
-                Browse Palettes
-              </Link>
-            </Button>
-          </div>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginBottom: '20px'
+              }}>
+                {palette.colors.map((color, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      flex: 1,
+                      height: '40px',
+                      borderRadius: '4px',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      background: '#0a0a0a'
+                    }}
+                  >
+                    <div style={{
+                      height: '100%',
+                      width: selectedPalette === palette.id ? '100%' : '80%',
+                      background: `linear-gradient(135deg, ${color}, ${color}dd)`,
+                      transition: 'width 0.6s ease'
+                    }} />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: selectedPalette === palette.id ? '#fff' : 'transparent',
+                  border: selectedPalette === palette.id ? '2px solid #fff' : '2px solid #333',
+                  color: selectedPalette === palette.id ? '#000' : '#fff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  marginTop: '20px'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedPalette !== palette.id) {
+                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.color = '#000';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedPalette !== palette.id) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#fff';
+                  }
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePaletteClick(palette.id);
+                  setIsModalOpen(true);
+                }}
+              >
+                SELECT PALETTE
+              </button>
+            </div>
+          ))}
         </div>
-      </section>
+
+        {selectedPalette && (
+          <div style={{
+            background: '#1a1a1a',
+            border: '2px solid #333',
+            borderRadius: '8px',
+            padding: '30px',
+            marginTop: '60px'
+          }}>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              Selected Color Palette
+            </div>
+            <div style={{
+              background: '#0a0a0a',
+              padding: '20px',
+              borderRadius: '4px',
+              fontFamily: "'SF Mono', monospace",
+              fontSize: '14px',
+              lineHeight: '1.6',
+              overflowX: 'auto'
+            }}>
+              <pre style={{ margin: 0 }}>
+{`// ${palettes.find(p => p.id === selectedPalette)?.name} Color Palette
+const colorPalette = {
+    primary: "${palettes.find(p => p.id === selectedPalette)?.colors[0]}",
+    secondary: "${palettes.find(p => p.id === selectedPalette)?.colors[1]}",
+    accent: "${palettes.find(p => p.id === selectedPalette)?.colors[2]}"
+};`}
+              </pre>
+            </div>
+            <button
+              id="copyButton"
+              onClick={copyCode}
+              style={{
+                marginTop: '15px',
+                padding: '10px 20px',
+                background: '#333',
+                border: 'none',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#444'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#333'}
+            >
+              COPY CODE
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Palette Detail Modal */}
+      <PaletteDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        palette={selectedPalette ? palettes.find(p => p.id === selectedPalette) || null : null}
+      />
     </div>
   );
 }

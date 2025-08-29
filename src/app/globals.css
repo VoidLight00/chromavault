@@ -2,156 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 4%; /* #0a0a0a */
-    --foreground: 0 0% 100%; /* #ffffff */
-    --card: 0 0% 7%; /* #111111 */
-    --card-foreground: 0 0% 100%; /* #ffffff */
-    --popover: 0 0% 7%; /* #111111 */
-    --popover-foreground: 0 0% 100%; /* #ffffff */
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 13%; /* #222222 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 13%; /* #222222 */
-    --muted-foreground: 0 0% 60%; /* #999999 */
-    --accent: 0 0% 13%; /* #222222 */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 13%; /* #222222 */
-    --input: 0 0% 13%; /* #222222 */
-    --ring: 217.2 91.2% 59.8%;
-    --radius: 0.75rem;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-
-  .dark {
-    --background: 0 0% 4%; /* #0a0a0a */
-    --foreground: 0 0% 100%; /* #ffffff */
-    --card: 0 0% 7%; /* #111111 */
-    --card-foreground: 0 0% 100%; /* #ffffff */
-    --popover: 0 0% 7%; /* #111111 */
-    --popover-foreground: 0 0% 100%; /* #ffffff */
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 13%; /* #222222 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 13%; /* #222222 */
-    --muted-foreground: 0 0% 60%; /* #999999 */
-    --accent: 0 0% 13%; /* #222222 */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 13%; /* #222222 */
-    --input: 0 0% 13%; /* #222222 */
-    --ring: 224.3 76.3% 94.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
+/* FORCE DARK THEME - OVERRIDE EVERYTHING */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@layer base {
-  * {
-    border-color: #222222 !important;
-  }
-  html {
-    background-color: #0a0a0a !important;
-  }
-  body {
-    background-color: #0a0a0a !important;
-    color: #ffffff !important;
-    min-height: 100vh !important;
-  }
+html {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
 }
 
-/* Force Dark Theme Everywhere - Ultimate Override */
-html, 
-html.dark,
-body,
-body.dark,
-#__next, 
-main,
-div[class*="min-h-screen"],
-section,
-nav {
+body {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background: #0a0a0a !important;
   background-color: #0a0a0a !important;
   color: #ffffff !important;
+  min-height: 100vh !important;
 }
 
-/* Force all backgrounds to respect dark theme */
+/* Override all Tailwind background utilities */
+.bg-background,
+.bg-card,
+.bg-popover,
+.bg-primary,
+.bg-secondary,
+.bg-muted,
+.bg-accent,
+.bg-destructive {
+  background-color: #0a0a0a !important;
+}
+
+/* Specific overrides for cards and sections */
+div[class*="bg-card"],
+div[class*="card"],
+.card {
+  background-color: #111111 !important;
+}
+
+/* All borders must be #222 */
 * {
+  border-color: #222222 !important;
+}
+
+/* Navigation specific */
+nav {
+  background-color: rgba(17, 17, 17, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 2px solid #222222 !important;
+}
+
+/* Main content area */
+main {
+  background-color: #0a0a0a !important;
+  padding-top: 64px !important;
+}
+
+/* Section with different background */
+section {
   background-color: transparent !important;
 }
 
-html, body {
-  background-color: #0a0a0a !important;
+section[style*="#111"] {
+  background-color: #111111 !important;
 }
 
-/* Force all divs to inherit dark theme */
-div {
-  background-color: transparent;
+/* Buttons */
+button {
+  transition: all 0.3s ease;
+}
+
+.bg-white {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-black {
+  color: #0a0a0a !important;
+}
+
+/* Hover states */
+.hover\:bg-white:hover {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+}
+
+.hover\:text-black:hover {
+  color: #0a0a0a !important;
+}
+
+.hover\:bg-accent:hover {
+  background-color: #222222 !important;
+}
+
+/* Text colors */
+.text-muted-foreground {
+  color: #999999 !important;
+}
+
+.text-gray-400 {
+  color: #999999 !important;
+}
+
+.text-gray-500 {
+  color: #666666 !important;
+}
+
+/* Input and form elements */
+input, textarea, select {
+  background-color: #111111 !important;
+  border: 1px solid #222222 !important;
+  color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #666666 !important;
+}
+
+/* Premium dark card styles */
+.premium-dark-card,
+div[style*="backgroundColor: '#111'"] {
+  background-color: #111111 !important;
+  border: 2px solid #222222 !important;
+}
+
+/* Ensure all text is visible */
+h1, h2, h3, h4, h5, h6, p, span, a, div {
   color: inherit;
 }
 
-/* Override card backgrounds */
-.bg-card,
-[class*="bg-card"] {
-  background-color: #111111 !important;
-  border-color: #222222 !important;
-}
-
-/* Premium Dark Components - Force Override */
-.premium-dark-bg,
-div.premium-dark-bg {
-  background-color: #0a0a0a !important;
-}
-
-.premium-dark-card,
-div.premium-dark-card,
-div[style*="background-color: #111"],
-div[style*="backgroundColor: '#111'"] {
-  background-color: #111111 !important;
-  border-color: #222222 !important;
-}
-
-.premium-dark-border,
-*[style*="border-color: #222"],
-*[style*="borderColor: '#222'"] {
-  border-color: #222222 !important;
-}
-
-/* Force specific inline styles */
-div[style*="#111"] {
-  background-color: #111111 !important;
-}
-
-div[style*="#222"] {
-  border-color: #222222 !important;
-}
-
-@layer utilities {
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 /* Custom scrollbar */
@@ -161,75 +150,321 @@ div[style*="#222"] {
 }
 
 ::-webkit-scrollbar-track {
-  background-color: hsl(var(--secondary));
+  background-color: #111111;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.2);
-  border-radius: 9999px;
+  background-color: #333333;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--muted-foreground) / 0.4);
+  background-color: #444444;
 }
 
-/* Animation utilities */
-.animate-pulse-slow {
-  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Advanced Glassmorphism Effects */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-.animate-bounce-slow {
-  animation: bounce 2s infinite;
+.glass-card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Glass morphism effect */
-.glass {
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.glass-card-hover:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 40px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
-.glass-dark {
-  background-color: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* Premium Gradient Effects */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(#111111, #111111) padding-box,
+              linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) border-box;
+  border: 2px solid transparent;
+  border-radius: 16px;
 }
 
-/* ULTIMATE DARK THEME OVERRIDE - MUST BE LAST */
-@media all {
-  html {
-    background: #0a0a0a !important;
-    background-color: #0a0a0a !important;
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Color Palette Card Animations */
+.palette-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.palette-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.palette-card:hover::before {
+  left: 100%;
+}
+
+.palette-card:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* Color Sample Enhanced Animations */
+.color-sample {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.color-sample::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.color-sample:hover::after {
+  width: 200%;
+  height: 200%;
+}
+
+.color-sample:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.5;
   }
-  
-  body {
-    background: #0a0a0a !important;
-    background-color: #0a0a0a !important;
-    color: #ffffff !important;
+  25% { 
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.8;
   }
-  
-  main {
-    background: #0a0a0a !important;
-    background-color: #0a0a0a !important;
+  50% { 
+    transform: translateY(-10px) translateX(-10px);
+    opacity: 0.5;
   }
-  
-  /* Override any white or light backgrounds */
-  .bg-white,
-  .bg-background,
-  [class*="bg-white"],
-  [class*="bg-background"] {
-    background-color: #0a0a0a !important;
+  75% { 
+    transform: translateY(-15px) translateX(5px);
+    opacity: 0.7;
   }
-  
-  /* Cards should be slightly lighter */
-  .bg-card,
-  [class*="bg-card"],
-  .card {
-    background-color: #111111 !important;
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 20s ease-in-out infinite;
+}
+
+/* Scroll Indicator Animation */
+@keyframes scroll {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
   }
-  
-  /* All borders should be #222 */
-  * {
-    border-color: #222222 !important;
+  100% {
+    transform: translateY(10px);
+    opacity: 0;
   }
+}
+
+.animate-scroll {
+  animation: scroll 1.5s ease-in-out infinite;
+}
+
+/* Pulse Animation for CTAs */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Gradient Animation */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background: linear-gradient(270deg, #667eea, #764ba2, #f093fb, #667eea);
+  background-size: 400% 400%;
+  animation: gradient-shift 10s ease infinite;
+}
+
+/* Neon Glow Effects */
+.neon-glow {
+  text-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor,
+    0 0 40px currentColor;
+}
+
+.neon-border {
+  box-shadow: 
+    0 0 5px #667eea,
+    0 0 10px #667eea,
+    0 0 15px #667eea,
+    inset 0 0 5px #667eea;
+}
+
+/* Color Psychology Indicators */
+.psychology-badge {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Advanced Button Styles */
+.premium-button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+}
+
+.premium-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease;
+}
+
+.premium-button:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.premium-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+/* Smooth Page Transitions */
+.page-transition {
+  animation: pageLoad 0.5s ease-out;
+}
+
+@keyframes pageLoad {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Premium Text Effects */
+.chrome-text {
+  background: linear-gradient(180deg, #eee 0%, #999 50%, #777 51%, #555 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Micro-interactions */
+.micro-interaction {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.micro-interaction:active {
+  transform: scale(0.95);
+}
+
+/* ULTIMATE OVERRIDE - This must be last */
+html, html.dark {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+}
+
+body, body.dark {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Override any inline styles */
+[style*="background-color: white"],
+[style*="background-color: #fff"],
+[style*="background-color: rgb(255"],
+[style*="backgroundColor: 'white'"],
+[style*="backgroundColor: '#fff'"] {
+  background-color: #0a0a0a !important;
+}
+
+/* Ensure dark theme for all divs */
+div:not([style*="#111"]):not([style*="#222"]):not([class*="color-sample"]):not([class*="palette"]) {
+  background-color: transparent !important;
+}
+
+/* Fix for any remaining white backgrounds */
+.bg-white,
+.bg-background,
+[class*="bg-white"],
+[class*="bg-background"] {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Ensure buttons with white background stay white */
+button.bg-white,
+a.bg-white {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
 }

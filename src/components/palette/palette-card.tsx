@@ -103,7 +103,7 @@ export function PaletteCard({
 
   return (
     <div className={cn(
-      'group bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow',
+      'group glass-card glass-card-hover palette-card rounded-xl overflow-hidden',
       className
     )}>
       <Link href={`/palette/${palette.id}`}>
@@ -113,7 +113,7 @@ export function PaletteCard({
             {palette.colors.map((color, index) => (
               <div
                 key={index}
-                className="flex-1 transition-all duration-300 hover:flex-[2]"
+                className="flex-1 color-sample transition-all duration-500 hover:flex-[2]"
                 style={{ backgroundColor: color.hex }}
               />
             ))}
@@ -194,7 +194,7 @@ export function PaletteCard({
             {palette.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-1 text-xs bg-secondary rounded-full"
+                className="psychology-badge"
               >
                 {tag}
               </span>

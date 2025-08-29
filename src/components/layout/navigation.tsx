@@ -76,10 +76,10 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-4 lg:px-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-white/20 to-white/10 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 animated-gradient rounded-lg flex items-center justify-center neon-border">
               <Palette className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white uppercase tracking-wide">ChromaVault</span>
+            <span className="text-xl font-bold gradient-text uppercase tracking-wide">ChromaVault</span>
           </Link>
 
           {/* Main Navigation */}
@@ -128,10 +128,10 @@ export function Navigation() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" asChild className="text-white hover:bg-white hover:text-black uppercase tracking-wide">
+                <Button variant="ghost" asChild className="text-white hover:bg-white hover:text-black uppercase tracking-wide micro-interaction">
                   <Link href="/auth/login">Login</Link>
                 </Button>
-                <Button asChild className="bg-white text-black hover:bg-gray-200 uppercase tracking-wide">
+                <Button variant="premium" asChild className="uppercase tracking-wide pulse-animation">
                   <Link href="/auth/signup">Sign Up</Link>
                 </Button>
               </div>
